@@ -99,7 +99,16 @@
     <label for="requirement">起名需求</label>
     <textarea id="requirement" placeholder="例如：男孩、国风、简约，姓李，希望名字有书卷气"></textarea>
     <div class="row" style="margin-top:14px">
-      <div style="flex:1">
+      <div style="flex:1;min-width:180px">
+        <label for="style">起名风格</label>
+        <select id="style">
+          <option value="">不限风格</option>
+          <option value="国风">国风（诗经楚辞、古典气韵）</option>
+          <option value="现代简约">现代简约（清朗好写、不失格调）</option>
+          <option value="英文名">英文名（国际通用、读音顺畅）</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:180px">
         <label for="model">选用的模型</label>
         <select id="model">
           <option value="doubao">豆包（火山方舟）</option>
@@ -177,6 +186,9 @@ async function startNaming() {
   const requirement = $('requirement').value.trim();
   if (!requirement) { $('requirement').focus(); return; }
   const model = $('model').value;
+  // 拔高拓展：风格选择，拼进需求里一起送给模型
+  const style = $('style').value;
+  const finalRequirement = style ? `${requirement}（风格要求：${style}）` : requirement;
 
   submitBtn.disabled = true;
   submitBtn.textContent = '生成中…';
@@ -190,7 +202,7 @@ async function startNaming() {
     const resp = await fetch('/api/name', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ requirement, model })
+      body: JSON.stringify({ requirement: finalRequirement, model })
     });
 
     if (!resp.ok) {
