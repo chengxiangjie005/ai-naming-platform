@@ -42,6 +42,7 @@ vercel dev
 | DeepSeek | https://api.deepseek.com/v1 |
 | 通义千问 | https://dashscope.aliyuncs.com/compatible-mode/v1 |
 | Kimi | https://api.moonshot.cn/v1 |
+| OpenRouter（一把密钥聚合多家模型，有免费额度） | https://openrouter.ai/api/v1 |
 | 免费测试模型（免密钥，演示兜底） | https://text.pollinations.ai/openai |
 
 ## 数据库
