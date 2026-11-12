@@ -42,6 +42,7 @@ vercel dev
 | DeepSeek | https://api.deepseek.com/v1 |
 | 通义千问 | https://dashscope.aliyuncs.com/compatible-mode/v1 |
 | Kimi | https://api.moonshot.cn/v1 |
+| 免费测试模型（免密钥，演示兜底） | https://text.pollinations.ai/openai |
 
 ## 数据库
 
@@ -54,3 +55,20 @@ vercel dev
 git push origin main          # 推送到 GitHub（.env 不会上传）
 # Vercel 导入该仓库 → 在 Project Settings → Environment Variables 填入同样的变量 → Deploy
 ```
+
+
+## 在线地址
+
+生产环境：https://ai-naming-platform-bice.vercel.app
+
+项目已与 GitHub 仓库 `chengxiangjie005/ai-naming-platform` 建立联动，向 `main` 分支推送后会自动重新部署。
+Vercel 的 Production 环境变量只有 `SUPABASE_URL`、`SUPABASE_ANON_KEY`；模型密钥未配置时，
+界面会把这些模型灰显，可改用“免费测试模型（免密钥）”完成演示。
+
+> 注：`vercel.app` 域名在国内网络可能访问不稳定，答辩演示可改用本地 `vercel dev`。
+
+## 说明：当前演示使用免密钥模型的原因
+
+火山方舟开通模型服务需要账号完成个人实名认证，未完成时调用会返回 `InvalidEndpointOrModel.NotFound`。
+密钥已保留在本地 `.env`（注释状态），完成认证后取消注释、在 Vercel 补一个 `DOUBAO_API_KEY` 环境变量即可切换回豆包，
+代码无需改动。
