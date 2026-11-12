@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI 起名平台</title>
+<style>
+  :root {
+    --ink: #1f2328;
+    --muted: #6b7280;
+    --line: #e5e7eb;
+    --brand: #b3452f;
+    --brand-soft: #fdf3ef;
+    --bg: #faf8f5;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "PingFang SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 40px 20px 64px; }
+  .head { text-align: center; margin-bottom: 32px; }
+  .logo {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 56px; height: 56px; border-radius: 16px;
+    background: var(--brand); color: #fff; font-size: 26px; font-weight: 700;
+    margin-bottom: 14px;
+  }
+  h1 { font-size: 30px; margin: 0 0 8px; letter-spacing: 2px; }
+  .sub { color: var(--muted); font-size: 14px; }
+
+  .card {
+    background: #fff; border: 1px solid var(--line); border-radius: 18px;
+    padding: 24px; box-shadow: 0 8px 24px rgba(31,35,40,.04);
+  }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+  textarea, select {
+    width: 100%; border: 1px solid var(--line); border-radius: 12px;
+    padding: 12px 14px; font-size: 15px; font-family: inherit;
+    background: #fff; color: var(--ink); outline: none; transition: border-color .2s;
+    resize: vertical; line-height: 1.6;
+  }
+  textarea:focus, select:focus { border-color: var(--brand); }
+  textarea { min-height: 88px; }
+  button {
+    border: none; border-radius: 12px; padding: 13px 26px;
+    background: var(--brand); color: #fff; font-size: 15px; cursor: pointer;
+    transition: opacity .2s; white-space: nowrap;
+  }
+  button:disabled { opacity: .55; cursor: not-allowed; }
+  .hint { font-size: 12px; color: var(--muted); margin-top: 10px; }
+
+  .result { margin-top: 24px; display: none; }
+  .result.show { display: block; }
+  .result-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .result-head h2 { font-size: 17px; margin: 0; }
+  .tag {
+    font-size: 12px; color: var(--brand); background: var(--brand-soft);
+    padding: 4px 10px; border-radius: 999px;
+  }
+  .output {
+    min-height: 120px; font-size: 15px; line-height: 1.9;
+    white-space: pre-wrap; word-break: break-word;
+  }
+  .output .cursor {
+    display: inline-block; width: 2px; height: 16px; background: var(--brand);
+    margin-left: 2px; animation: blink 1s infinite; vertical-align: -2px;
+  }
+  @keyframes blink { 0%,49% { opacity: 1 } 50%,100% { opacity: 0 } }
+  .placeholder { color: #9ca3af; }
+
+  .history { margin-top: 32px; }
+  .history h2 { font-size: 16px; margin: 0 0 14px; color: var(--muted); font-weight: 500; }
+  .items { display: grid; gap: 10px; }
+  .item {
+    background: #fff; border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px 16px; font-size: 14px;
+  }
+  .item-top { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+  .item-q { color: var(--ink); font-weight: 600; }
+  .item-preview { color: var(--muted); margin-top: 4px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .empty { color: #9ca3af; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div class="logo">名</div>
+    <h1>AI 起名平台</h1>
+    <div class="sub">输入你的期待，AI 为你生成三组名字与寓意</div>
+  </div>
+
+  <div class="card">
+    <label for="requirement">起名需求</label>
+    <textarea id="requirement" placeholder="例如：男孩、国风、简约，姓李，希望名字有书卷气"></textarea>
+    <div class="row" style="margin-top:14px">
+      <div style="flex:1">
+        <label for="model">选用的模型</label>
+        <select id="model">
+          <option value="doubao">豆包（火山方舟）</option>
+        </select>
+      </div>
+      <button id="submit">开始起名</button>
+    </div>
+    <div class="hint">提示：生成过程中文字会实时流出（流式输出），结果会自动保存到历史记录。</div>
+  </div>
+
+  <div class="result" id="result">
+    <div class="result-head">
+      <h2>起名结果</h2>
+      <span class="tag" id="modelTag">豆包</span>
+    </div>
+    <div class="output" id="output"><span class="placeholder">等待开始…</span></div>
+  </div>
+
+  <div class="history">
+    <h2>最近起名记录</h2>
+    <div class="items" id="historyItems"><div class="empty">加载中…</div></div>
+  </div>
+</div>
+
+<script>
+const MODEL_LABELS = { doubao: '豆包' };
+
+const $ = (id) => document.getElementById(id);
+const output = $('output');
+const submitBtn = $('submit');
+
+function escapeHtml(s) {
+  return s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+}
+
+// 极简 Markdown 渲染（只处理 ## 标题、**加粗**、换行）
+function renderMarkdown(text) {
+  let html = escapeHtml(text);
+  html = html.replace(/^##\s+(.+)$/gm, '<div style="font-weight:700;color:#b3452f;margin:14px 0 4px">$1</div>');
+  html = html.replace(/\*\*(.+?)\*\*/g, '<span style="font-weight:600">$1</span>');
+  return html;
+}
+
+let typing = false;
+
+async function startNaming() {
+  const requirement = $('requirement').value.trim();
+  if (!requirement) { $('requirement').focus(); return; }
+  const model = $('model').value;
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = '生成中…';
+  $('result').classList.add('show');
+  $('modelTag').textContent = MODEL_LABELS[model] || model;
+  output.innerHTML = '<span class="cursor"></span>';
+  let text = '';
+  typing = true;
+
+  try {
+    const resp = await fetch('/api/name', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ requirement, model })
+    });
+
+    if (!resp.ok) {
+      const data = await resp.json().catch(() => ({}));
+      throw new Error(data.error || ('HTTP ' + resp.status));
+    }
+
+    const reader = resp.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const frames = buffer.split('\n\n');
+      buffer = frames.pop() || '';
+
+      for (const frame of frames) {
+        const line = frame.split('\n').find((l) => l.startsWith('data:'));
+        if (!line) continue;
+        let evt;
+        try { evt = JSON.parse(line.slice(5).trim()); } catch { continue; }
+
+        if (evt.type === 'delta') {
+          text += evt.content;
+          output.innerHTML = renderMarkdown(text) + '<span class="cursor"></span>';
+        } else if (evt.type === 'error') {
+          output.innerHTML = '<span style="color:#b91c1c">' + escapeHtml(evt.message) + '</span>';
+        } else if (evt.type === 'warn') {
+          console.warn(evt.message);
+        } else if (evt.type === 'done') {
+          typing = false;
+          output.innerHTML = renderMarkdown(text);
+          loadHistory();
+        }
+      }
+    }
+  } catch (err) {
+    output.innerHTML = '<span style="color:#b91c1c">出错了：' + escapeHtml(err.message) + '</span>';
+  } finally {
+    typing = false;
+    submitBtn.disabled = false;
+    submitBtn.textContent = '开始起名';
+  }
+}
+
+async function loadHistory() {
+  try {
+    const resp = await fetch('/api/history');
+    const data = await resp.json();
+    const items = data.items || [];
+    const box = $('historyItems');
+    if (!items.length) { box.innerHTML = '<div class="empty">暂无记录</div>'; return; }
+    box.innerHTML = items.map((it) => `
+      <div class="item">
+        <div class="item-top">
+          <span>${escapeHtml(it.model_name || '')}</span>
+          <span>${new Date(it.created_at).toLocaleString('zh-CN')}</span>
+        </div>
+        <div class="item-q">${escapeHtml(it.user_requirement)}</div>
+        <div class="item-preview">${escapeHtml((it.name_result || '').replace(/[#*]/g, '').replace(/\n/g, ' '))}</div>
+      </div>`).join('');
+  } catch (e) {
+    $('historyItems').innerHTML = '<div class="empty">历史记录加载失败（检查 Supabase 配置）</div>';
+  }
+}
+
+submitBtn.addEventListener('click', startNaming);
+$('requirement').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) startNaming();
+});
+loadHistory();
+</script>
+</body>
+</html>
