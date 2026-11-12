@@ -35,12 +35,13 @@ const SYSTEM_PROMPT = `你是一位精通中文姓名文化、音韵学与品牌
 
 // ---------- 共用调用代码：所有模型走同一段 fetch + SSE 解析 ----------
 async function streamChat(config, messages, onDelta) {
+  const headers = { 'Content-Type': 'application/json' }
+  // 免密钥的公共接口不带 Authorization 头；其余模型统一 Bearer 鉴权
+  if (config.apiKey) headers.Authorization = `Bearer ${config.apiKey}`
+
   const upstream = await fetch(`${config.baseURL}/chat/completions`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${config.apiKey}`
-    },
+    headers,
     body: JSON.stringify({
       model: config.model,
       stream: true,
@@ -99,7 +100,7 @@ module.exports = async (req, res) => {
   const modelKey = model && modelConfigMap[model] ? model : DEFAULT_MODEL
   const config = modelConfigMap[modelKey]
 
-  if (!config.apiKey) {
+  if (config.requiresKey !== false && !config.apiKey) {
     res.status(500).json({ error: `模型 ${modelKey} 缺少密钥，请检查环境变量配置` })
     return
   }

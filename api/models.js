@@ -6,7 +6,7 @@ module.exports = async (req, res) => {
     key,
     label: cfg.label,
     model: cfg.model,
-    available: Boolean(cfg.apiKey)
+    available: cfg.requiresKey === false ? true : Boolean(cfg.apiKey)
   }))
   res.status(200).json({ items })
 }
